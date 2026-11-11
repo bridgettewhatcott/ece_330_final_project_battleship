@@ -1,0 +1,297 @@
+/** this file was provided as a template for the C code **/
+
+Page
+2
+of 7
+/** !
+* Battleship implementation
+*
+* @file battleship.c
+*
+* @author Jacob Smith
+*/
+// headers
+#include "tmpl.h"
+// forward declarations
+static void poll_switches ( void );
+static void poll_potentiometers ( void );
+static void store_message ( const char *p_message );
+static fn_state *state_start;
+static fn_state *state_p1_place;
+static fn_state *state_p2_place;
+static fn_state *state_p1_turn;
+static fn_state *state_p2_turn;
+static fn_state *state_result;
+// data
+static fn_state *_pfn_states[] =
+{
+[STATE_START] = state_start,
+[STATE_P1_PLACE] = state_p1_place,
+[STATE_P2_PLACE] = state_p2_place,
+[STATE_P1_TURN] = state_p1_turn,
+[STATE_P2_TURN] = state_p2_turn,
+[STATE_RESULT] = state_result,
+};
+struct
+{
+unsigned short sw; // the switches (16 switches -> 16 bits -> short)
+unsigned short ld; // the led's (16 leds -> 16 bits -> short)
+bool pc10; // true IF PC10 is down ELSE false
+bool pc11; // true IF PC11 is down ELSE false
+unsigned short _pa[3]; // raw potentiometer values (3 potentiometers -> 3
+values -> array of 3 shorts)
+unsigned int time; // the time (in ms) since the board started
+(incremented by timer interrupt)
+}
+device_state =
+{
+.sw = 0,
+.ld = 0,
+.pc10 = false,
+.pc11 = false,
+._pa =
+{
+0, // <- PA1
+0, // <- PA2
+0, // <- PA3
+},
+};
+// player data
+player players[PLAYER_QUANTITY] =
+{
+// player A's data
+[PLAYER_A] =
+{
+// player A's maps
+.maps =
+{
+// player A's ship map is empty when the game starts
+[SHIP] =
+{
+.horizontal =
+{
+{ STILL, STILL, STILL, STILL, STILL, STILL, STILL,
+STILL, },
+{ STILL, STILL, STILL, STILL, STILL, STILL, STILL,
+STILL, },
+{ STILL, STILL, STILL, STILL, STILL, STILL, STILL,
+STILL, },
+},
+.vertical =
+{
+{ STILL, STILL, STILL, STILL, STILL, STILL, STILL,
+STILL, STILL, STILL, STILL, STILL, STILL, STILL, STILL, STILL, },
+{ STILL, STILL, STILL, STILL, STILL, STILL, STILL,
+STILL, STILL, STILL, STILL, STILL, STILL, STILL, STILL, STILL, },
+},
+},
+// player A's shot map is empty when the game starts
+[SHOT] =
+{
+.horizontal = { 0 },
+.vertical = { 0 },
+}
+}
+},
+// Player B's data
+[PLAYER_B] =
+{
+// player B's maps
+.maps =
+{
+// player B's ship map is empty when the game starts
+[SHIP] =
+{
+.horizontal = { 0 },
+.vertical = { 0 },
+},
+// player B's shot map is empty when the game starts
+[SHOT] =
+{
+.horizontal = { 0 },
+.vertical = { 0 },
+}
+},
+},
+};
+extern void input_poll ( void )
+{
+// poll the switches
+poll_switches();
+// poll the potentiometers
+poll_potentiometers();
+// todo: poll any other input devices
+//
+// done
+return;
+}
+static void poll_switches ( void )
+{
+// todo: store the state of the switches in device_state.sw
+//
+// done
+return;
+}
+static void poll_potentiometers ( void )
+{
+// todo: iterate through each potentiometer and store the value in the
+corresponding index of device_state._pa
+//
+// done
+return;
+}
+extern void timer_step ( void )
+{
+// todo: call this function from the SysTick handler
+//
+// increment the time
+device_state.time++;
+// done
+return;
+}
+extern void draw_board ( map _map )
+{
+// initialized data
+unsigned char _board[8] = { 0 };
+bool should_dim = (device_state.time % 5 == 0 );
+bool should_blink = ( (device_state.time / 250) % 2 == 0 );
+// draw the horizontal segments
+for (size_t i = 0; i < 8; i++)
+{
+// set the top segment based on the horizontal[0] map
+switch(_map.horizontal[0][i])
+{
+case STILL:
+_board[i] |= 0;
+break;
+case HIT:
+_board[i] |= SEG7_TOP;
+break;
+case MISS:
+_board[i] |= should_dim ? SEG7_TOP : 0;
+break;
+case CURSOR:
+_board[i] |= should_blink ? SEG7_TOP : 0;
+break;
+}
+// todo: set the middle segment based on the horizontal[1] map
+//
+// todo: set the bottom segment based on the horizontal[2] map
+//
+}
+// draw the vertical segments
+for (size_t i = 0; i < 8; i++)
+{
+// todo: set the top left segment based on the vertical[0] map
+//
+// todo: set the top right segment based on the vertical[0] map
+//
+// todo: set the bottom left segment based on the vertical[1] map
+//
+// todo: set the bottom right segment based on the vertical[1] map
+//
+}
+// write the board array to the seven segment display
+for(int i = 0; i < 8; i++)
+GPIOE->ODR = (0XFF00 | ~_board[i]) & ~(1<<((7-i)+8)),
+GPIOE->ODR |= 0xFF00;
+// done
+return;
+}
+extern void game_logic ( void )
+{
+// static data
+static int state = STATE_START;
+// update
+_pfn_states[state]();
+// state transition
+switch (state)
+{
+case STATE_START:
+if ( device_state.pc10 )
+state = STATE_P1_PLACE;
+break;
+// player 1 places boats
+case STATE_P1_PLACE:
+// transition
+if ( 0 )
+state = STATE_P2_PLACE;
+break;
+// player 2 places boats
+case STATE_P2_PLACE:
+// transition
+if ( 0 )
+state = STATE_P2_PLACE;
+break;
+// player 1 takes a shot
+case STATE_P1_TURN:
+// transition
+if ( 0 )
+state = STATE_P2_TURN;
+else if ( 0 )
+state = STATE_RESULT;
+break;
+// player 2 takes a shot
+case STATE_P2_TURN:
+// transition
+if ( 0 )
+state = STATE_P1_TURN;
+else
+state = STATE_RESULT;
+break;
+// game over
+case STATE_RESULT:
+if ( device_state.pc10 )
+state = STATE_START;
+break;
+// unknown state -> reset
+default:
+state = STATE_START;
+break;
+}
+// done
+return;
+}
+void state_start ( void )
+{
+// todo
+//
+// done
+return;
+}
+void state_p1_place ( void )
+{
+// todo
+//
+// done
+return;
+}
+void state_p2_place ( void )
+{
+// todo
+//
+// done
+return;
+}
+void state_p1_turn ( void )
+{
+// todo
+//
+// done
+return;
+}
+void state_p2_turn ( void )
+{
+// todo
+//
+// done
+return;
+}
+void state_result ( void )
+{
+// todo
+//
+// done
+return;
+}
+
