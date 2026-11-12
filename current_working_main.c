@@ -115,12 +115,27 @@ int main(void)
  TIM7->DIER |= 1; // Enable timer 7 interrupt
  TIM7->CR1 |= 1; // Enable timer counting
 
- /* display "battleship" across marquee at start  */
+ /* "battleship" across marquee at start  */
  char Message[] =
  		{SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,
  		CHAR_B, CHAR_A, CHAR_T, CHAR_T, CHAR_L, CHAR_E, CHAR_S, CHAR_H, CHAR_I, CHAR_P,
  		SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE};
 
+
+ /* "Player One Place Your Ships" here*/
+ char playerOnePlace[] =
+ 		{SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,
+ 		CHAR_P, CHAR_L, CHAR_A, CHAR_Y, CHAR_E, CHAR_R, SPACE, CHAR_O, CHAR_N, CHAR_E,
+ 		SPACE, CHAR_P, CHAR_L, CHAR_A, CHAR_C, CHAR_E, SPACE, CHAR_Y, CHAR_O, CHAR_U, CHAR_R, SPACE, CHAR_S, CHAR_H, CHAR_I, CHAR_P, CHAR_S,
+ 		SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE};
+
+
+ /*display "Player Two Place Your Ships" here*/
+ char playerTwoPlace[] =
+ 		{SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,
+ 		CHAR_P, CHAR_L, CHAR_A, CHAR_Y, CHAR_E, CHAR_R, SPACE, CHAR_T, CHAR_W, CHAR_O,
+ 		SPACE, CHAR_P, CHAR_L, CHAR_A, CHAR_C, CHAR_E, SPACE, CHAR_Y, CHAR_O, CHAR_U, CHAR_R,SPACE, CHAR_S, CHAR_H, CHAR_I, CHAR_P, CHAR_S,
+ 		SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE};
 
  /*display scrolling message for battleship here*/
 
@@ -141,72 +156,52 @@ int main(void)
 	  		  Seven_Segment_Digit(i,SPACE,0);
 	  	  }
 
-	  HAL_Delay(500);           // Delay 1/2 second
-	  HAL_Delay(100);          // Delay for 1 second
+	  HAL_Delay(1000);
+
+	  /*scroll "Player One Place Your Ships" here*/
+
+	  Message_Pointer = &playerOnePlace[0];
+	  	  Save_Pointer = &playerOnePlace[0];
+	  	  Message_Length = sizeof(playerOnePlace)/sizeof(playerOnePlace[0]);
+	  	  Delay_msec = 200;
+	  	  Animate_On = 1;
+	  	  HAL_Delay(7500);           // Delay 5 seconds to allow message to scroll
+
+	  	  Animate_On = 0;            // Stop scrolling message
+	  	  HAL_Delay(1000);           // Delay 1 second
+	  	  for (i=0 ; i<8 ; i++)      // Clear the display
+	  	  	  {
+	  	  		  Seven_Segment_Digit(i,SPACE,0);
+	  	  	  }
+
+	  	  HAL_Delay(100);           // Delay 1/2 second
+
+
+
+
+	  	 /*scroll "Player Two Place Your Ships" here*/
+
+		  Message_Pointer = &playerTwoPlace[0];
+		  Save_Pointer = &playerTwoPlace[0];
+		  Message_Length = sizeof(playerTwoPlace)/sizeof(playerTwoPlace[0]);
+		  Delay_msec = 200;
+		  Animate_On = 1;
+		  HAL_Delay(7500);           // Delay 5 seconds to allow message to scroll
+
+		  Animate_On = 0;            // Stop scrolling message
+		  HAL_Delay(1000);           // Delay 1 second
+		  for (i=0 ; i<8 ; i++)      // Clear the display
+		  	  {
+		  		  Seven_Segment_Digit(i,SPACE,0);
+		  	  }
+
+		  HAL_Delay(100);          // Delay for 1 second
+
 
   }
 
- /*display "Player One Place Your Ships" here*/
- char playerOnePlace[] =
- 		{SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,
- 		CHAR_P, CHAR_L, CHAR_A, CHAR_Y, CHAR_E, CHAR_R, SPACE, CHAR_O, CHAR_N, CHAR_E,
- 		SPACE, CHAR_P, CHAR_L, CHAR_A, CHAR_C, CHAR_E, SPACE, CHAR_Y, CHAR_O, CHAR_U, CHAR_R, CHAR_S, CHAR_H, CHAR_I, CHAR_P, CHAR_S,
- 		SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE};
 
 
- /*scroll "Player One Place Your Ships" here*/
- while (1)
- {
-	  int i,j;
-	  playerOnePlace_Pointer = &playerOnePlace[0];
-	  Save_PointerP1 = &playerOnePlace[0];
-	  playerOnePlace_Length = sizeof(playerOnePlace)/sizeof(playerOnePlace[0]);
-	  Delay_msec = 200;
-	  Animate_On = 1;
-	  HAL_Delay(5000);           // Delay 5 seconds to allow message to scroll
-
-	  Animate_On = 0;            // Stop scrolling message
-	  HAL_Delay(1000);           // Delay 1 second
-	  for (i=0 ; i<8 ; i++)      // Clear the display
-	  	  {
-	  		  Seven_Segment_Digit(i,SPACE,0);
-	  	  }
-
-	  HAL_Delay(500);           // Delay 1/2 second
-	  HAL_Delay(100);          // Delay for 1 second
-
-  }
-
- /*display "Player Two Place Your Ships" here*/
- char playerTwoPlace[] =
- 		{SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,
- 		CHAR_P, CHAR_L, CHAR_A, CHAR_Y, CHAR_E, CHAR_R, SPACE, CHAR_T, CHAR_W, CHAR_O,
- 		SPACE, CHAR_P, CHAR_L, CHAR_A, CHAR_C, CHAR_E, SPACE, CHAR_Y, CHAR_O, CHAR_U, CHAR_R, CHAR_S, CHAR_H, CHAR_I, CHAR_P, CHAR_S,
- 		SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE,SPACE};
-
- /*scroll "Player Two Place Your Ships" here*/
- while (1)
- {
-	  int i,j;
-	  playerTwoPlace_Pointer = &playerTwoPlace[0];
-	  Save_PointerP2 = &playerTwoPlace[0];
-	  playerTwoPlace_Length = sizeof(playerTwoPlace)/sizeof(playerTwoPlace[0]);
-	  Delay_msec = 200;
-	  Animate_On = 1;
-	  HAL_Delay(5000);           // Delay 5 seconds to allow message to scroll
-
-	  Animate_On = 0;            // Stop scrolling message
-	  HAL_Delay(1000);           // Delay 1 second
-	  for (i=0 ; i<8 ; i++)      // Clear the display
-	  	  {
-	  		  Seven_Segment_Digit(i,SPACE,0);
-	  	  }
-
-	  HAL_Delay(500);           // Delay 1/2 second
-	  HAL_Delay(100);          // Delay for 1 second
-
-
- }
 }
 
 /**
