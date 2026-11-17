@@ -19,6 +19,7 @@
 #include "main.h"
 #include "usb_host.h"
 #include "seg7.h"
+#include <stdbool.h>
 
 /* Private variables */
 I2C_HandleTypeDef hi2c1;
@@ -32,6 +33,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM7_Init(void);
 void MX_USB_HOST_Process(void);
+void Error_Handler(void);
 
 
 /* declare local variables*/
@@ -66,14 +68,22 @@ char *Save_PointerP2;
 int Delay_msec = 0;
 int Delay_counter = 0;
 
+static unsigned int horizontal_position = 0;
+static unsigned int vertical_position = 0;
+/*horizontal map coordinates*/
+static unsigned char horiz_map_column = 0;
+static unsigned char horiz_map_row = 0;
 
 
+/*vertical map coordinates*/
+static unsigned char vert_map_column=0;
+static unsigned char vert_map_row=0;
 
 
 
 ///* Declare array for Song */
-Music Song[100];
-/* USER CODE END 0 */
+//Music Song[100];
+///* USER CODE END 0 */
 /**
  * @brief  The application entry point.
  * @retval int
@@ -83,6 +93,8 @@ int main(void)
 
  /* resetting peripherals, initialize the Flash interface and Systick. */
  HAL_Init();
+
+
 
  /* configuring the system clock */
  SystemClock_Config();
@@ -105,9 +117,38 @@ int main(void)
 
 
  /*configure ADC1*/
+
  RCC->APB2ENR |= 1<<8;  // Turn on ADC1 clock by forcing bit 8 to 1 while keeping other bits unchanged
  ADC1->SMPR2 |= 1; // 15 clock cycles per sample
+
+
+
+ /* additions to configuring ADC1, not confident ***/
+
+ // Enable GPIOA clock
+ RCC->AHB1ENR |= 1<<0;
+
+ // Configure PA1 and PA2 as analog inputs
+ GPIOA->MODER |= (3<<2) | (3<<4);
+
+ // Enable ADC1 clock
+ RCC->APB2ENR |= 1<<8;
+
+ // Configure sampling time for channels 1 and 2
+ ADC1->SMPR2 |= (1<<3) | (1<<6);
+
+ // Configure sequence length for 2 conversions
+ ADC1->SQR1 &= ~(0xF<<20);
+ ADC1->SQR1 |= (1<<20);
+
+ // Set conversion sequence
+ ADC1->SQR3 = (1<<0) | (2<<5);
+
+ // Enable scan mode
+ ADC1->CR1 |= (1<<8);
+
  ADC1->CR2 |= 1;        // Turn on ADC1 by forcing bit 0 to 1 while keeping other bits
+
 
  /*configure timer 7*/
  TIM7->PSC = 199; //250Khz timer clock prescaler value, 250Khz = 50Mhz / 200
@@ -411,25 +452,25 @@ void Error_Handler(void)
   {
   }
 }
-  /* USER CODE END Error_Handler_Debug */
-
-
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
-  /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
+//  /* USER CODE END Error_Handler_Debug */
+//
+//
+//#ifdef  USE_FULL_ASSERT
+///**
+//  * @brief  Reports the name of the source file and the source line number
+//  *         where the assert_param error has occurred.
+//  * @param  file: pointer to the source file name
+//  * @param  line: assert_param error line source number
+//  * @retval None
+//  */
+//void assert_failed(uint8_t *file, uint32_t line)
+//{
+//  /* USER CODE BEGIN 6 */
+//  /* User can add his own implementation to report the file name and line number,
+//     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+//  /* USER CODE END 6 */
+//}
+//#endif /* USE_FULL_ASSERT */
 
 
 
@@ -471,12 +512,12 @@ void assert_failed(uint8_t *file, uint32_t line)
 //
 //
 //
-////BEGIN TA HELPER FILE//
-//
-///* include statement */
-//
-////#include "tmpl.h"
-//
+//BEGIN TA HELPER FILE//
+
+/* include statement */
+
+//#include "tmpl.h"
+
 //// forward declarations
 //static void poll_switches ( void );
 //static void poll_potentiometers ( void );
@@ -500,30 +541,30 @@ void assert_failed(uint8_t *file, uint32_t line)
 //};
 //
 //
-//struct
-//{
-//	unsigned short sw; // the switches (16 switches -> 16 bits -> short)
-//	unsigned short ld; // the led's (16 leds -> 16 bits -> short)
-//	bool pc10; // true IF PC10 is down ELSE false
-//	bool pc11; // true IF PC11 is down ELSE false
-//	unsigned short _pa[3]; // raw potentiometer values (3 potentiometers -> 3
-//	//values -> array of 3 shorts)
-//	unsigned int time; // the time (in ms) since the board started
-//	//(incremented by timer interrupt)
-//}
-//device_state =
+struct
+{
+	unsigned short sw; // the switches (16 switches -> 16 bits -> short)
+	unsigned short ld; // the led's (16 leds -> 16 bits -> short)
+	bool pc10; // true IF PC10 is down ELSE false
+	bool pc11; // true IF PC11 is down ELSE false
+	unsigned short _pa[3]; // raw potentiometer values (3 potentiometers -> 3
+	//values -> array of 3 shorts)
+	unsigned int time; // the time (in ms) since the board started
+	//(incremented by timer interrupt)
+}
+device_state;
 //{
 //	.sw = 0,
 //	.ld = 0,
 //	.pc10 = false,
+
 //	.pc11 = false,
 //	._pa =
 //{
 //	0, // <- PA1
 //	0, // <- PA2
 //	0, // <- PA3
-//},
-//};
+
 //
 //
 //
@@ -609,89 +650,240 @@ void assert_failed(uint8_t *file, uint32_t line)
 //{
 //// poll the switches
 //poll_switches();
-//// poll the potentiometers
-//poll_potentiometers();
+
+
+
 //// todo: poll any other input devices
 ////
 //// done
 //return;
 //}
-//static void poll_switches ( void )
-//{
-//// todo: store the state of the switches in device_state.sw
-////
-//// done
-//return;
+static void poll_switches ( void )
+{
+	/*store the state of the switches in device_state.sw*/
+	device_state.sw = GPIOC->IDR;
+
+	/*read / store from PC10 and PC11*/
+	device_state.pc10 = (GPIOC->IDR & (1<<10)) != 0;
+	device_state.pc11 = (GPIOC->IDR & (1<<11)) != 0;
+
+	return;
+
+}
+
+
+static void poll_potentiometers ( void )
+
+{
+	ADC1->SQR1 = (1<<8);
+	ADC1->SQR3 = (1<<0) | (2<<5);
+
+
+    /*start conversion here*/
+    ADC1->CR2 |= (1<<30);
+
+    /*wait for the first conversion*/
+    while (!(ADC1->SR & (1<<1)));
+
+    /*store the horizontal position e*/
+    device_state._pa[0]= ADC1->DR;
+
+   /*wait for the second conversion*/
+    while (!(ADC1->SR & (1<<1)));
+
+    /*store the vertical position*/
+    device_state._pa[0] = ADC1->DR;
+
+    /*calculating cursor position for the horizontal map*/
+    horiz_map_column = (device_state._pa[0] * 8) / 4096;
+    horiz_map_row = (device_state._pa[1]* 3) / 4096;
+
+    /*calculating cursor position for the vertical map*/
+    vert_map_column = (device_state._pa[0] * 16) / 4096;
+    vert_map_row = (device_state._pa[1] * 2) / 4096;
+
+
+    return;
+}
+
+
+
+extern void timer_step ( void )
+{
+
+	/*function has been called from SysTick handler*/
+
+	/*increment time*/
+	device_state.time++;
+
+	return;
+}
+
+
+
+
+
+extern void draw_board ( map _map )
+{
+// initialized data
+unsigned char _board[8] = { 0 };
+bool should_dim = (device_state.time % 5 == 0 );
+bool should_blink = ( (device_state.time / 250) % 2 == 0 );
+
+// draw the horizontal segments
+for (size_t i = 0; i < 8; i++)
+{
+/*set the top segment based on the horizontal[0] map*/
+switch(_map.horizontal[0][i])
+{
+case STILL:
+_board[i] |= 0;
+break;
+case HIT:
+_board[i] |= SEG7_TOP;
+break;
+case MISS:
+_board[i] |= should_dim ? SEG7_TOP : 0;
+break;
+case CURSOR:
+_board[i] |= should_blink ? SEG7_TOP : 0;
+break;
+}
+
+
+/*set middle segment based on the horizontal[1] map*/
+switch(_map.horizontal[1][i])
+{
+
+case STILL :
+	_board[i] |= 0;
+	break;
+
+case HIT :
+	_board[i] |=SEG7_MIDDLE;
+	break;
+
+case MISS :
+	_board[i] |= should_dim ? SEG7_MIDDLE : 0;
+	break;
+
+case CURSOR:
+	_board[i] |= should_blink ? SEG7_MIDDLE : 0;
+	break;
+
+}
+
+
+/*set the bottom segment based on the horizontal[2] map*/
+switch(_map.horizontal[2][i])
+{
+
+case STILL :
+	_board[i] |= 0;
+	break;
+
+case HIT :
+	_board[i] |=SEG7_BOTTOM;
+	break;
+
+case MISS :
+	_board[i] |= should_dim ? SEG7_BOTTOM : 0;
+	break;
+
+case CURSOR:
+	_board[i] |= should_blink ? SEG7_BOTTOM : 0;
+	break;
+	}
+}
+
+
+
 //}
-//static void poll_potentiometers ( void )
-//{
-//// todo: iterate through each potentiometer and store the value in the
-//corresponding index of device_state._pa
-////
-//// done
-//return;
-//
-//
-//
-//}
-//extern void timer_step ( void )
-//{
-//// todo: call this function from the SysTick handler
-////
-//// increment the time
-//device_state.time++;
-//// done
-//return;
-//}
-//extern void draw_board ( map _map )
-//{
-//// initialized data
-//unsigned char _board[8] = { 0 };
-//bool should_dim = (device_state.time % 5 == 0 );
-//bool should_blink = ( (device_state.time / 250) % 2 == 0 );
-//// draw the horizontal segments
-//for (size_t i = 0; i < 8; i++)
-//{
-//// set the top segment based on the horizontal[0] map
-//switch(_map.horizontal[0][i])
-//{
-//case STILL:
-//_board[i] |= 0;
-//break;
-//case HIT:
-//_board[i] |= SEG7_TOP;
-//break;
-//case MISS:
-//_board[i] |= should_dim ? SEG7_TOP : 0;
-//break;
-//case CURSOR:
-//_board[i] |= should_blink ? SEG7_TOP : 0;
-//break;
-//}
-//// todo: set the middle segment based on the horizontal[1] map
-////
-//// todo: set the bottom segment based on the horizontal[2] map
-////
-//}
-//// draw the vertical segments
-//for (size_t i = 0; i < 8; i++)
-//{
-//// todo: set the top left segment based on the vertical[0] map
-////
-//// todo: set the top right segment based on the vertical[0] map
-////
-//// todo: set the bottom left segment based on the vertical[1] map
-////
-//// todo: set the bottom right segment based on the vertical[1] map
-////
-//}
-//// write the board array to the seven segment display
-//for(int i = 0; i < 8; i++)
-//GPIOE->ODR = (0XFF00 | ~_board[i]) & ~(1<<((7-i)+8)),
-//GPIOE->ODR |= 0xFF00;
-//// done
-//return;
-//}
+// draw the vertical segments
+for (size_t i = 0; i < 8; i++)
+{
+    /*top left segment set*/
+	switch(_map.vertical[0][i*2])
+	{
+	case STILL:
+	_board[i] |= 0;
+	break;
+	case HIT:
+	_board[i] |= SEG7_TOP_LEFT;
+	break;
+	case MISS:
+	_board[i] |= should_dim ? SEG7_TOP_LEFT : 0;
+	break;
+	case CURSOR:
+	_board[i] |= should_blink ? SEG7_TOP_LEFT : 0;
+	break;
+	}
+
+
+	/*top right segment set*/
+	switch(_map.vertical[0][i*2 + 1])
+	{
+	case STILL:
+	_board[i] |= 0;
+	break;
+	case HIT:
+	_board[i] |= SEG7_TOP_RIGHT;
+	break;
+	case MISS:
+	_board[i] |= should_dim ? SEG7_TOP_RIGHT : 0;
+	break;
+	case CURSOR:
+	_board[i] |= should_blink ? SEG7_TOP_RIGHT : 0;
+	break;
+	}
+
+	/*bottom left segment set*/
+	switch(_map.vertical[0][i*2])
+	{
+	case STILL:
+	_board[i] |= 0;
+	break;
+	case HIT:
+	_board[i] |= SEG7_BOTTOM_LEFT;
+	break;
+	case MISS:
+	_board[i] |= should_dim ? SEG7_BOTTOM_LEFT : 0;
+	break;
+	case CURSOR:
+	_board[i] |= should_blink ? SEG7_BOTTOM_LEFT : 0;
+	break;
+	}
+
+	/*bottom right segment set*/
+	switch(_map.vertical[0][i*2 +1])
+	{
+	case STILL:
+	_board[i] |= 0;
+	break;
+	case HIT:
+	_board[i] |= SEG7_BOTTOM_RIGHT;
+	break;
+	case MISS:
+	_board[i] |= should_dim ? SEG7_BOTTOM_RIGHT : 0;
+	break;
+	case CURSOR:
+	_board[i] |= should_blink ? SEG7_BOTTOM_RIGHT : 0;
+	break;
+	}
+}
+
+
+// write the board array to the seven segment display
+for(int i = 0; i < 8; i++)
+{
+	GPIOE->ODR = (0XFF00 | ~_board[i]) & ~(1<<((7-i)+8));
+	GPIOE->ODR |= 0xFF00;
+	return;
+}
+}
+
+
+
 //extern void game_logic ( void )
 //{
 //// static data
