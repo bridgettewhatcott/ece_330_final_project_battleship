@@ -882,6 +882,32 @@ for(int i = 0; i < 8; i++)
 }
 }
 
+/*work in progress*/
+//static void cursor_update(map*board)
+//{
+//	if (board->horizontal[previous_row][previous_column] == CURSOR)
+//	{
+//		board->horizontal[previous_row][previous_column] = STILL;
+//	}
+//
+//	board->horizontal[horiz_map_row][horiz_map_column] = CURSOR;
+//}
+
+
+
+
+
+
+//static void cursor_update(map*board)
+//{
+//	if (board->horizontal[previous_row][previous_column] == CURSOR)
+//	{
+//		board->horizontal[previous_row][previous_column] = STILL;
+//	}
+//
+//	board->horizontal[horiz_map_row][horiz_map_column] = CURSOR;
+//}
+
 
 
 //extern void game_logic ( void )
